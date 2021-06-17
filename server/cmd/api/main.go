@@ -50,7 +50,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	db.Close()
+	defer db.Close()
 
 	app := &application{
 		config: cfg,
