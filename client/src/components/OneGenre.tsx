@@ -1,17 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { Movie } from '../interfaces/movie.interface';
 
-export default function Movies() {
+export default function OneGenre() {
 
   const [movies, setMovies] = React.useState<Movie[]>([]);
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [error, setError] = React.useState<Error | null>(null);
 
+  const { id } = useParams<{ id: string }>();
+  const { state: { genreName } } = useLocation<{ genreName: string }>();
+
   const fetchAllMovies = React.useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:4000/v1/movies");
+      const response = await fetch("http://localhost:4000/v1/movies/" + id);
 
       if (response.status !== 200) {
         let err = new Error();
@@ -26,7 +28,7 @@ export default function Movies() {
       setIsLoaded(true);
       setError(err);
     }
-  }, []);
+  }, [id]);
 
   React.useEffect(() => {
     fetchAllMovies();
@@ -42,14 +44,15 @@ export default function Movies() {
       <div>Error: {error.message}</div>
     );
   }
+
   return (
     <React.Fragment>
       <h2>
-        Choose a movie
+        Genre: {genreName}
       </h2>
 
       <div className="list-group">
-        {movies.map((m) => (
+        {(movies ?? []).map((m) => (
           <Link key={m.id} className="list-group-item list-group-action" to={`/movies/${m.id}`}>{m.title}</Link>
         ))}
       </div>
