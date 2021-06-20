@@ -12,7 +12,7 @@ export interface Movie {
   title: string;
   description: string;
   year: number;
-  release_date: Date;
+  release_date: string;
   runtime: number;
   rating: number;
   mpaa_rating: string;

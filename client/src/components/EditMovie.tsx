@@ -1,27 +1,69 @@
-import React from 'react'
+import React from 'react';
+import { useParams } from 'react-router-dom';
 
 import "./EditMovie.css";
 import { Movie } from '../interfaces/movie.interface';
+import Input from './form-components/Input';
+import Textarea from './form-components/Textarea';
+import Select from './form-components/Select';
 
 export default function EditMovie() {
+
+  const { id } = useParams<{ id: string }>();
+  const memoizedId = React.useMemo(() => {
+    return parseInt(id, 10);
+  }, [id]);
 
   const [movie, setMovie] = React.useState<Movie>();
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [error, setError] = React.useState<Error | null>(null);
+  const [errors, setErrors] = React.useState<string[]>([]);
+
+  const fetchMovie = React.useCallback(async () => {
+    try {
+      const response = await fetch("http://localhost:4000/v1/movie/" + memoizedId);
+
+      if (response.status !== 200) {
+        let err = new Error();
+        err.message = "Invalid response code: " + response.status;
+        throw err;
+      }
+
+      const json: { movie: Movie } = await response.json();
+
+      if (json.movie.genres) {
+        json.movie.genres = Object.values(json.movie.genres);
+      } else {
+        json.movie.genres = [];
+      }
+      json.movie.release_date = new Date(json.movie.release_date).toISOString().split("T")[0];
+
+      setMovie(json.movie);
+      setIsLoaded(true);
+    } catch (err) {
+      setIsLoaded(true);
+      setError(err);
+    }
+  }, [memoizedId]);
 
   React.useEffect(() => {
-    setMovie({
-      id: 1,
-      description: "123",
-      genres: {},
-      mpaa_rating: "PG13",
-      rating: 3,
-      release_date: new Date(),
-      runtime: 142,
-      title: "Shawshank Redemption",
-      year: 1991,
-    })
-  }, []);
+    if (memoizedId > 0) {
+      fetchMovie();
+    } else {
+      setIsLoaded(true);
+      setMovie({
+        id: 0,
+        description: "",
+        genres: {},
+        mpaa_rating: "",
+        rating: 0,
+        release_date: "",
+        runtime: 0,
+        title: "",
+        year: 0
+      })
+    }
+  }, [fetchMovie, memoizedId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = e.target.value;
@@ -32,10 +74,63 @@ export default function EditMovie() {
     })
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    console.log("Form was submitted");
+  const handleSubmit = React.useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  };
+
+    // client-side validation
+    let newErrors: string[] = [];
+
+    if (movie?.title === "") {
+      newErrors.push("title");
+    }
+
+    if (movie?.description === "") {
+      newErrors.push("description");
+    }
+
+    if (movie?.release_date === "") {
+      newErrors.push("release_date");
+    }
+
+    if (isNaN(movie?.runtime!) || parseInt(movie?.runtime.toString()!, 10) <= 0) {
+      newErrors.push("runtime");
+    }
+
+    if (isNaN(movie?.rating!) || movie?.rating! <= 0 || parseInt(movie?.rating.toString()!, 10) > 5) {
+      newErrors.push("rating");
+    }
+
+    setErrors(newErrors);
+
+    if (newErrors.length > 0) {
+      return false;
+    }
+
+    const requestOptions = {
+      method: "post",
+      body: JSON.stringify(movie),
+    }
+
+    let response = await fetch("http://localhost:4000/v1/admin/editmovie", requestOptions);
+    response = await response.json();
+
+    console.log(response);
+  }, [movie]);
+
+  const hasError = (key: string) => {
+    return errors.indexOf(key) !== -1;
+  }
+
+  if (!isLoaded) {
+    return (
+      <p>Loading...</p>
+    );
+  }
+  if (error) {
+    return (
+      <div>Error: {error.message}</div>
+    );
+  }
 
   return (
     <React.Fragment>
@@ -49,83 +144,74 @@ export default function EditMovie() {
           value={movie?.id ?? 0}
           onChange={handleChange}
         />
-        <div className="mb-3">
-          <label htmlFor="title" className="form-label">Title</label>
-          <input
-            type="text"
-            className="form-control"
-            id="title"
-            name="title"
-            value={movie?.title ?? ""}
-            onChange={handleChange}
-          />
-        </div>
 
-        <div className="mb-3">
-          <label htmlFor="release_date" className="form-label">Release date</label>
-          <input
-            type="text"
-            className="form-control"
-            id="release_date"
-            name="release_date"
-            value={movie?.release_date.toString() ?? ""}
-            onChange={handleChange}
-          />
-        </div>
+        <Input
+          type="text"
+          className={hasError("title") ? "is-invalid" : ""}
+          name="title"
+          title="Title"
+          value={movie?.title ?? ""}
+          handleChange={handleChange}
+          errorDiv={hasError("title") ? "text-danger" : "d-none"}
+          errorMsg={"Please enter a title"}
+        />
 
-        <div className="mb-3">
-          <label htmlFor="runtime" className="form-label">Runtime</label>
-          <input
-            type="text"
-            className="form-control"
-            id="runtime"
-            name="runtime"
-            value={movie?.runtime.toString() ?? 0}
-            onChange={handleChange}
-          />
-        </div>
+        <Input
+          type="date"
+          name="release_date"
+          title="Release date"
+          value={movie?.release_date ?? ""}
+          handleChange={handleChange}
+          className={hasError("release_date") ? "is-invalid" : ""}
+          errorDiv={hasError("release_date") ? "text-danger" : "d-none"}
+          errorMsg={"Please enter a release date"}
+        />
 
-        <div className="mb-3">
-          <label htmlFor="mpaa_rating" className="form-label">MPAA Rating</label>
-          <select
-            className="form-select"
-            name="mpaa_rating"
-            id="mpaa_rating"
-            value={movie?.mpaa_rating ?? ""}
-            onChange={handleChange}
-          >
-            <option className="form-select">Choose...</option>
-            <option className="form-select" value="G">G</option>
-            <option className="form-select" value="PG">PG</option>
-            <option className="form-select" value="PG13">PG13</option>
-            <option className="form-select" value="R">R</option>
-            <option className="form-select" value="NC17">NC17</option>
-          </select>
-        </div>
+        <Input
+          type="text"
+          name="runtime"
+          title="Runtime"
+          value={movie?.runtime ?? 0}
+          handleChange={handleChange}
+          className={hasError("runtime") ? "is-invalid" : ""}
+          errorDiv={hasError("runtime") ? "text-danger" : "d-none"}
+          errorMsg={"Please enter a valid runtime"}
+        />
 
-        <div className="mb-3">
-          <label htmlFor="rating" className="form-label">Rating</label>
-          <input
-            type="text"
-            className="form-control"
-            id="rating"
-            name="rating"
-            value={movie?.rating ?? 0}
-            onChange={handleChange}
-          />
-        </div>
+        <Select
+          name="mpaa_rating"
+          title="MPAA Rating"
+          value={movie?.mpaa_rating ?? 0}
+          handleChange={handleChange}
+          options={[
+            { value: "G", text: "G" },
+            { value: "PG", text: "PG" },
+            { value: "PG13", text: "PG13" },
+            { value: "R", text: "R" },
+            { value: "NC17", text: "NC17" },
+          ]}
+        />
 
-        <div className="mb-3">
-          <label htmlFor="description" className="form-label">Description</label>
-          <textarea
-            rows={3}
-            onChange={handleChange}
-            className="form-control"
-            id="description"
-            name="description"
-            value={movie?.description ?? ""}
-          />
-        </div>
+        <Input
+          type="text"
+          name="rating"
+          title="Rating"
+          value={movie?.rating ?? 0}
+          handleChange={handleChange}
+          className={hasError("rating") ? "is-invalid" : ""}
+          errorDiv={hasError("rating") ? "text-danger" : "d-none"}
+          errorMsg={"Please enter a rating between 1 and 5"}
+        />
+
+        <Textarea
+          title="Description"
+          name="description"
+          value={movie?.description ?? ""}
+          handleChange={handleChange}
+          className={hasError("description") ? "is-invalid" : ""}
+          errorDiv={hasError("description") ? "text-danger" : "d-none"}
+          errorMsg={"Please enter a release date"}
+        />
 
         <hr />
 
