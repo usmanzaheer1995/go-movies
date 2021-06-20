@@ -5,6 +5,9 @@ type IProps = {
   title: string;
   value: any;
   placeholder?: string;
+  className?: string;
+  errorDiv: string;
+  errorMsg: string;
   options: {
     value: string;
     text: string;
@@ -14,6 +17,7 @@ type IProps = {
 
 const defaultProps = {
   placeholder: "",
+  className: "",
 };
 
 function Select(props: IProps) {
@@ -21,16 +25,20 @@ function Select(props: IProps) {
     <div className="mb-3">
       <label htmlFor={props.name} className="form-label">{props.title}</label>
       <select
-        className="form-select"
+        className={`form-select ${props.className}`}
         name={props.name}
         id={props.name}
         value={props.value}
         onChange={props.handleChange}
       >
+        <option className="form-select">Choose...</option>
         {props.options.map((o) => (
           <option className="form-select" key={o.value} value={o.value}>{o.text}</option>
         ))}
       </select>
+      <div className={props.errorDiv}>
+        {props.errorMsg}
+      </div>
     </div>
   )
 }

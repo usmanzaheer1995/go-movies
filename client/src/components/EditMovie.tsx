@@ -1,11 +1,14 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link, useHistory } from 'react-router-dom';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 import "./EditMovie.css";
 import { Movie } from '../interfaces/movie.interface';
 import Input from './form-components/Input';
 import Textarea from './form-components/Textarea';
 import Select from './form-components/Select';
+import Alert from "./ui-components/Alert";
 
 export default function EditMovie() {
 
@@ -14,10 +17,16 @@ export default function EditMovie() {
     return parseInt(id, 10);
   }, [id]);
 
+  const history = useHistory();
+
   const [movie, setMovie] = React.useState<Movie>();
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [error, setError] = React.useState<Error | null>(null);
   const [errors, setErrors] = React.useState<string[]>([]);
+  const [alert, setAlert] = React.useState({
+    type: "d-none",
+    msg: "",
+  });
 
   const fetchMovie = React.useCallback(async () => {
     try {
@@ -92,6 +101,10 @@ export default function EditMovie() {
       newErrors.push("release_date");
     }
 
+    if (movie?.mpaa_rating === "") {
+      newErrors.push("mpaa_rating");
+    }
+
     if (isNaN(movie?.runtime!) || parseInt(movie?.runtime.toString()!, 10) <= 0) {
       newErrors.push("runtime");
     }
@@ -108,18 +121,78 @@ export default function EditMovie() {
 
     const requestOptions = {
       method: "post",
-      body: JSON.stringify(movie),
+      body: JSON.stringify({
+        ...movie,
+        rating: +movie?.rating!,
+        runtime: +movie?.runtime!,
+      }),
     }
 
-    let response = await fetch("http://localhost:4000/v1/admin/editmovie", requestOptions);
-    response = await response.json();
+    try {
+      let response = await fetch("http://localhost:4000/v1/admin/editmovie", requestOptions);
 
-    console.log(response);
-  }, [movie]);
+      if (!response.ok) {
+        response = await response.json();
+        throw new Error((response as any).error?.message || "Something went wrong");
+      }
+
+      response = await response.json();
+
+      setAlert({ type: "alert-success", msg: "Changes saved!" })
+
+      history.push({
+        pathname: "/admin",
+      });
+    } catch (err) {
+      setAlert({ type: "alert-danger", msg: err.message })
+    }
+
+  }, [movie, history]);
 
   const hasError = (key: string) => {
     return errors.indexOf(key) !== -1;
   }
+
+  const confirmDelete = React.useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    confirmAlert({
+      title: 'Delete movie?',
+      message: 'Are you sure?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              let response = await fetch(
+                "http://localhost:4000/v1/admin/deletemovie/" + movie?.id,
+                {
+                  method: "GET"
+                }
+              );
+        
+              if (!response.ok) {
+                response = await response.json();
+                throw new Error((response as any).error?.message || "Something went wrong");
+              }
+        
+              response = await response.json();
+        
+              setAlert({ type: "alert-success", msg: "Movie deleted!" });
+              history.push({
+                pathname: "/admin",
+              });
+        
+            } catch (err) {
+              setAlert({ type: "alert-danger", msg: err.message })
+            }
+          }
+        },
+        {
+          label: 'No',
+          onClick: () => {}
+        }
+      ]
+    });
+  }, [movie, history])
 
   if (!isLoaded) {
     return (
@@ -135,6 +208,12 @@ export default function EditMovie() {
   return (
     <React.Fragment>
       <h2>Add/Edit Movie</h2>
+
+      <Alert
+        alertType={alert.type}
+        alertMsg={alert.msg}
+      />
+
       <hr />
       <form onSubmit={handleSubmit}>
         <input
@@ -183,6 +262,9 @@ export default function EditMovie() {
           title="MPAA Rating"
           value={movie?.mpaa_rating ?? 0}
           handleChange={handleChange}
+          className={hasError("mpaa_rating") ? "is-invalid" : ""}
+          errorDiv={hasError("mpaa_rating") ? "text-danger" : "d-none"}
+          errorMsg={"Please select a rating"}
           options={[
             { value: "G", text: "G" },
             { value: "PG", text: "PG" },
@@ -216,13 +298,17 @@ export default function EditMovie() {
         <hr />
 
         <button className="btn btn-primary mb-3">Save</button>
+        {movie?.id !== 0 && (
+          <button
+            type="button"
+            className="btn btn-danger ms-1 mb-3"
+            onClick={confirmDelete}
+          >
+            Delete
+          </button>
+        )}
+        <Link to="/admin" className="btn btn-warning ms-1 mb-3">Cancel</Link>
       </form>
-
-      <div>
-        <pre>
-          {JSON.stringify(movie, null, 3)}
-        </pre>
-      </div>
     </React.Fragment>
   );
 }

@@ -8,10 +8,10 @@ export interface MovieGenre {
 }
 
 export interface Movie {
-  id: number;
+  id?: number | string;
   title: string;
   description: string;
-  year: number;
+  year: number | string;
   release_date: string;
   runtime: number;
   rating: number;
