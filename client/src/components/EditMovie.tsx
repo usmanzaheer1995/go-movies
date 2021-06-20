@@ -10,7 +10,15 @@ import Textarea from './form-components/Textarea';
 import Select from './form-components/Select';
 import Alert from "./ui-components/Alert";
 
-export default function EditMovie() {
+type IProps = {
+  jwt: string;
+} & typeof defaultProps;
+
+const defaultProps = {
+
+};
+
+export default function EditMovie(props: IProps) {
 
   const { id } = useParams<{ id: string }>();
   const memoizedId = React.useMemo(() => {
@@ -56,6 +64,10 @@ export default function EditMovie() {
   }, [memoizedId]);
 
   React.useEffect(() => {
+    if (!localStorage.getItem("go-movies-jwt")) {
+      history.replace("/login");
+      return;
+    }
     if (memoizedId > 0) {
       fetchMovie();
     } else {
@@ -72,7 +84,13 @@ export default function EditMovie() {
         year: 0
       })
     }
-  }, [fetchMovie, memoizedId]);
+  }, [fetchMovie, memoizedId, props.jwt, history]);
+
+  // React.useEffect(() => {
+  //   if (props.jwt === "") {
+  //     history.replace("/login");
+  //   }
+  // }, [props.jwt, history]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = e.target.value;
@@ -119,14 +137,19 @@ export default function EditMovie() {
       return false;
     }
 
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Authorization", `Bearer ${props.jwt}`);
+
     const requestOptions = {
       method: "post",
+      headers: myHeaders,
       body: JSON.stringify({
         ...movie,
         rating: +movie?.rating!,
         runtime: +movie?.runtime!,
       }),
-    }
+    };
 
     try {
       let response = await fetch("http://localhost:4000/v1/admin/editmovie", requestOptions);
@@ -147,7 +170,7 @@ export default function EditMovie() {
       setAlert({ type: "alert-danger", msg: err.message })
     }
 
-  }, [movie, history]);
+  }, [movie, history, props.jwt]);
 
   const hasError = (key: string) => {
     return errors.indexOf(key) !== -1;
@@ -162,10 +185,14 @@ export default function EditMovie() {
           label: 'Yes',
           onClick: async () => {
             try {
+              const myHeaders = new Headers();
+              myHeaders.append("Content-Type", "application/json");
+              myHeaders.append("Authorization", `Bearer ${props.jwt}`);
               let response = await fetch(
                 "http://localhost:4000/v1/admin/deletemovie/" + movie?.id,
                 {
-                  method: "GET"
+                  method: "GET",
+                  headers: myHeaders,
                 }
               );
         
@@ -192,7 +219,7 @@ export default function EditMovie() {
         }
       ]
     });
-  }, [movie, history])
+  }, [movie, history, props.jwt])
 
   if (!isLoaded) {
     return (

@@ -72,7 +72,8 @@ func (app *application) getAllMoviesByGenre(w http.ResponseWriter, r *http.Reque
 }
 
 func (app *application) deleteMovie(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
+	//params := httprouter.ParamsFromContext(r.Context())
+	params := r.Context().Value("params").(httprouter.Params)
 
 	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil {
@@ -98,18 +99,18 @@ func (app *application) deleteMovie(w http.ResponseWriter, r *http.Request) {
 }
 
 type MoviePayload struct {
-	ID          int `json:"id"`
+	ID          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Year        int `json:"year"`
+	Year        int    `json:"year"`
 	ReleaseDate string `json:"release_date"`
-	Runtime     int `json:"runtime"`
-	Rating      int `json:"rating"`
+	Runtime     int    `json:"runtime"`
+	Rating      int    `json:"rating"`
 	MPAARating  string `json:"mpaa_rating"`
 }
 
 type jsonResponse struct {
-	OK bool `json:"ok"`
+	OK      bool   `json:"ok"`
 	Message string `json:"message"`
 }
 
