@@ -16,5 +16,6 @@ export interface Movie {
   runtime: number;
   rating: number;
   mpaa_rating: string;
+  poster?: string;
   genres: { [key: number]: string } | string[];
 }

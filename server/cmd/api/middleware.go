@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
-	"github.com/pascaldekloe/jwt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pascaldekloe/jwt"
 )
 
 func (app *application) enableCORS(next http.Handler) http.Handler {
@@ -72,4 +73,3 @@ func (app *application) checkToken(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-

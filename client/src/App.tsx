@@ -14,6 +14,8 @@ import Genres from './components/Genres';
 import OneGenre from './components/OneGenre';
 import EditMovie from './components/EditMovie';
 import Login from './components/Login';
+import Graphql from './components/Graphql';
+import OneMovieGraphql from './components/OneMovieGraphql';
 
 function App() {
 
@@ -82,13 +84,18 @@ function App() {
                   </React.Fragment>
                 )}
                 
+                <li className="list-group-item">
+                  <Link to="/graphql">GraphQL</Link>
+                </li>
+
               </ul>
             </nav>
           </div>
 
           <div className="col-md-10">
             <Switch>
-              <Route path="/movies/:id" component={OneMovie} />
+              <Route exact path="/movies/graphql/:id" component={OneMovieGraphql} />
+              <Route exact path="/movies/:id" component={OneMovie} />
               <Route path="/movies">
                 <Movies />
               </Route>
@@ -107,6 +114,9 @@ function App() {
               <Route path="/admin">
                 <Admin jwt={jwt} />
               </Route>
+
+              <Route exact path="/graphql" component={Graphql} />
+
               <Route path="/">
                 <Home />
               </Route>
