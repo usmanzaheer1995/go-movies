@@ -39,7 +39,7 @@ export default function Graphql() {
     };
 
     try {
-      let response = await fetch("http://localhost:4000/v1/graphql", requestOptions);
+      let response = await fetch(`${process.env.REACT_APP_API_URL}/v1/graphql`, requestOptions);
       if (!response.ok) {
         response = await response.json();
         throw new Error((response as any).error?.message || "Something went wrong");
@@ -84,7 +84,7 @@ export default function Graphql() {
     };
 
     try {
-      let response = await fetch("http://localhost:4000/v1/graphql", requestOptions);
+      let response = await fetch(`${process.env.REACT_APP_API_URL}/v1/graphql`, requestOptions);
       if (!response.ok) {
         response = await response.json();
         throw new Error((response as any).error?.message || "Something went wrong");

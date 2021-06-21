@@ -38,7 +38,7 @@ export default function EditMovie(props: IProps) {
 
   const fetchMovie = React.useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:4000/v1/movie/" + memoizedId);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/v1/movie/` + memoizedId);
 
       if (response.status !== 200) {
         let err = new Error();
@@ -152,7 +152,7 @@ export default function EditMovie(props: IProps) {
     };
 
     try {
-      let response = await fetch("http://localhost:4000/v1/admin/editmovie", requestOptions);
+      let response = await fetch(`${process.env.REACT_APP_API_URL}/v1/admin/editmovie`, requestOptions);
 
       if (!response.ok) {
         response = await response.json();
@@ -189,7 +189,7 @@ export default function EditMovie(props: IProps) {
               myHeaders.append("Content-Type", "application/json");
               myHeaders.append("Authorization", `Bearer ${props.jwt}`);
               let response = await fetch(
-                "http://localhost:4000/v1/admin/deletemovie/" + movie?.id,
+                `${process.env.REACT_APP_API_URL}/v1/admin/deletemovie/` + movie?.id,
                 {
                   method: "GET",
                   headers: myHeaders,

@@ -13,7 +13,7 @@ export default function OneGenre() {
 
   const fetchAllMovies = React.useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:4000/v1/movies/" + id);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/v1/movies/` + id);
 
       if (response.status !== 200) {
         let err = new Error();
