@@ -3,3 +3,6 @@
 **/node_modules
 server/server
 .env
+gomovies
+build.zip
+**/logs
