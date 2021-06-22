@@ -118,6 +118,13 @@ function Login(props: IProps) {
         <hr />
 
         <button className="btn btn-primary">Login</button>
+
+        <hr />
+
+        <small>
+          <strong><i>Hint: </i></strong><br />
+          email: me@here.com / password: password
+        </small>
       </form>
     </React.Fragment>
   )
